@@ -13,35 +13,40 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 /*
- * A quick and easy way to do database testing if you only depend a base database container. 
+ * An alternate example of using Testcontainers for database testing. 
+ * This example directly starts up a Testcontainer and the pulls the 
+ * relevant info on connecting to the container from it.
+ * 
  * @author William.Korando@ibm.com
  *
  */
+@Testcontainers
 @SpringJUnitConfig
-@ContextConfiguration(classes = { StormTrackerApplication.class }, initializers = ITStormRepo.Initializer.class)
+@ContextConfiguration(classes = {
+		StormTrackerApplication.class }, initializers = ITStormRepoAlternate.Initializer.class)
 @TestPropertySource("classpath:application.properties")
-//Inherit the application.properties the application would really be using, override/add properties like JDBC URL below
-//More demonstration purposes, ideally properties should be managed by environment and not packaged in application artifact
 @TestMethodOrder(OrderAnnotation.class)
-public class ITStormRepo {
+public class ITStormRepoAlternate {
 
 	public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 		@Override
 		public void initialize(ConfigurableApplicationContext applicationContext) {
-			TestPropertyValues.of("spring.datasource.url=jdbc:tc:postgresql:11.2://localhost/test", //
-					// JDBC url must start with "jdbc:tc" followed by type of database you are
-					// connecting to
-					"spring.datasource.username=test", //
-					"spring.datasource.password=test", //
-					//username/password can be arbitrary strings
-					"spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver")//
-					// Must use the ContainerDatabaseDriver which starts up the Docker container, is
-					// eventually replaced with database appropriate driver
+			TestPropertyValues.of("spring.datasource.url=" + container.getJdbcUrl(), //Pull from the container the JDBC connection URL
+					"spring.datasource.username=" + container.getUsername(), //Pull from the container the username to connect to the containerized database (default is "test")
+					"spring.datasource.password=" + container.getPassword(), //Pull from the container the password to connect to the containerized database (default is "test")
+					"spring.jpa.properties.hibernate.hbm2ddl.import_files=data.sql", //
+					"spring.jpa.hibernate.ddl-auto=create-drop")
 					.applyTo(applicationContext);
 		}
 	}
+
+	@Container
+	private static PostgreSQLContainer container = new PostgreSQLContainer("postgres:11.2");//Can be an arbitrary image name and tag
 
 	@Autowired
 	private StormRepo repo;
