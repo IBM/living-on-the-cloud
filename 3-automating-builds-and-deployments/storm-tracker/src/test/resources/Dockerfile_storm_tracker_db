@@ -1,3 +1,0 @@
-FROM postgres:11.2
-ENV POSTGRES_DB storm-tracker-db
-COPY init-db.sql /docker-entrypoint-initdb.d/
