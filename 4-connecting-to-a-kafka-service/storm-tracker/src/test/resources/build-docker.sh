@@ -1,1 +1,0 @@
-docker build -f Dockerfile_storm_tracker_db -t storm_tracker_db .
