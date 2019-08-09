@@ -30,11 +30,11 @@ public class ITStormRepo {
 	public static class Initializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 		@Override
 		public void initialize(ConfigurableApplicationContext applicationContext) {
-			TestPropertyValues.of("spring.datasource.url=jdbc:tc:postgresql:11.2://localhost/test", //
+			TestPropertyValues.of("spring.datasource.url=jdbc:tc:storm_tracker_db:latest://arbitrary/arbitrary", //
 					// JDBC url must start with "jdbc:tc" followed by type of database you are
 					// connecting to
-					"spring.datasource.username=test", //
-					"spring.datasource.password=test", //
+					"spring.datasource.username=arbitrary", //
+					"spring.datasource.password=arbitrary", //
 					//username/password can be arbitrary strings
 					"spring.datasource.driver-class-name=org.testcontainers.jdbc.ContainerDatabaseDriver")//
 					// Must use the ContainerDatabaseDriver which starts up the Docker container, is

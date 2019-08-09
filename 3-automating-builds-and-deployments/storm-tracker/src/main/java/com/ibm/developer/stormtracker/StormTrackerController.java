@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,16 +24,10 @@ public class StormTrackerController {
 	public ResponseEntity<Iterable<Storm>> findAllStorms() {
 		return ResponseEntity.ok(repo.findAll());
 	}
-
+	
 	@GetMapping("/{stormId}")
 	public ResponseEntity<Storm> findById(@PathVariable long stormId) {
 		return ResponseEntity.ok(repo.findById(stormId).get());
-	}
-
-	@GetMapping("/search")
-	public ResponseEntity<Iterable<Storm>> findByStartLocation(
-			@RequestParam(name = "startLocation") String startLocation) {
-		return ResponseEntity.ok(repo.findByStartLocation(startLocation));
 	}
 
 	@PostMapping

@@ -11,13 +11,12 @@
 	</parent>
 	<groupId>com.ibm.developer</groupId>
 	<artifactId>storm-tracker</artifactId>
-	<version>0.0.3-SNAPSHOT</version>
+	<version>0.0.2-SNAPSHOT</version>
 	<name>storm-tracker</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
 		<java.version>1.8</java.version>
-		<junit-jupiter.version>5.4.0</junit-jupiter.version>
 	</properties>
 
 	<dependencies>
@@ -33,33 +32,10 @@
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
 		</dependency>
-		<!--  test dependencies -->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>1.11.1</version>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.testcontainers</groupId>
-			<artifactId>junit-jupiter</artifactId>
-			<version>1.11.0</version>
-			<scope>test</scope>
-		</dependency>
-
 	</dependencies>
 
 	<build>
+		<finalName>storm-tracker</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -72,25 +48,14 @@
 				<configuration>
 					<images>
 						<image>
-							<name>us.icr.io/living-on-the-cloud/${project.name}</name>
+							<name>us.icr.io/openj9-demo/${project.name}</name>
 							<build>
+								<dockerFile>Dockerfile</dockerFile>
+								<dockerFileDir>${project.basedir}</dockerFileDir>
 								<tags>
 									<tag>latest</tag>
 									<tag>${project.version}</tag>
 								</tags>
-								<from>adoptopenjdk/openjdk8-openj9</from>
-								<entryPoint>
-									<exec>
-										<arg>java</arg>
-										<arg>-jar</arg>
-										<arg>/${project.build.finalName}.jar</arg>
-									</exec>
-								</entryPoint>
-								<assembly>
-									<targetDir>/</targetDir>
-									<mode>dir</mode>
-									<descriptorRef>artifact</descriptorRef>
-								</assembly>
 							</build>
 						</image>
 					</images>

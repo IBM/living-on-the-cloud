@@ -1,5 +1,6 @@
 package com.ibm.developer.stormtracker;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -7,18 +8,24 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "Storms")
+@Table(name = "storms")
+@SequenceGenerator(name = "storms_id_generator", allocationSize = 1, initialValue = 10)
 public class Storm {
 
 	@Id
 	@GeneratedValue(generator = "storms_id_generator")
-	@SequenceGenerator(name = "storms_id_generator", allocationSize = 1, initialValue = 10)
 	private long id;
+	@Column(name = "start_date")
 	private String startDate;
+	@Column(name = "end_date")
 	private String endDate;
+	@Column(name = "start_location")
 	private String startLocation;
+	@Column(name = "end_location")
 	private String endLocation;
+	@Column(name = "type")
 	private String type;
+	@Column(name = "intensity")
 	private int intensity;
 
 	Storm() {
