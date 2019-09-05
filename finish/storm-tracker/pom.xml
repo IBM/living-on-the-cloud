@@ -40,7 +40,7 @@
 				<configuration>
 					<images>
 						<image>
-							<name>us.icr.io/openj9-demo/${project.name}</name>
+							<name>us.icr.io/living-on-the-cloud/${project.name}</name>
 							<build>
 								<dockerFile>Dockerfile</dockerFile>
 								<dockerFileDir>${project.basedir}</dockerFileDir>
