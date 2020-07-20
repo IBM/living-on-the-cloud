@@ -1,0 +1,70 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: storm-tracker-application-pipeline
+spec:
+  resources:
+    - name: source
+      type: git
+  params:
+    - name: pathToContext
+      description: The path to the build context, used by Kaniko - within the workspace
+	  default: .
+    - name: pathToDeploymentFile
+      description: The path to the dockerfile to build
+	  default: deployment.yaml
+    - name: pathToDockerfile
+      description: The path to the dockerfile to build
+	  default: Dockerfile
+    - name: apiUrl
+      description: ibmcloud api url
+	  default: cloud.ibm.com
+    - name: imageUrl
+      description: Base url for container repository
+    - name: imageNamespace
+      description: Namespace where image image is located
+    - name: imageName
+      description: Name of image to be deployed
+    - name: imageTag
+      description: Tag of image to be deployed
+    - name: nameOfCluster
+      description: The number of cluster to deploy the image to
+    - name: clusterRegion
+      description: The region where the cluster resides
+    - name: mvnGoals
+      description: The Maven goals to run
+      type: array
+      default: ["package"]
+  tasks:
+  - name: build-image-from-source
+    taskRef:
+      name: build-image-from-source
+    params:
+      - name: pathToContext
+        value: "$(params.pathToContext)"
+      - name: imageUrl
+        value: "$(params.imageUrl)"
+      - name: imageTag
+        value: "$(params.imageTag)"
+    resources:
+      inputs:
+        - name: source
+          resource: source
+  - name: deploy-image-to-cluster
+    taskRef:
+      name: deploy-image-to-ibm-cloud
+    runAfter:
+      - build-image-from-source
+    params:
+      - name: pathToContext
+        value: "$(params.pathToContext)"
+      - name: pathToYamlFile
+        value: "$(params.pathToYamlFile)"
+      - name: imageUrl
+        value: "$(params.imageUrl)"
+      - name: imageTag
+        value: "$(params.imageTag)"
+    resources:
+      inputs:
+        - name: source
+          resource: source
