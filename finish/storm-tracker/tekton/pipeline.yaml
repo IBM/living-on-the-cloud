@@ -1,0 +1,81 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-pipeline
+spec:
+  resources:
+    - name: source
+      type: git
+  params:
+    - name: path-to-context
+      description: The path to the build context, used by Kaniko - within the workspace
+      default: .
+    - name: path-to-deployment-file
+      description: The path to the dockerfile to build
+      default: deployment.yaml
+    - name: path-to-dockerfile
+      description: The path to the dockerfile to build
+      default: Dockerfile
+    - name: api-url
+      description: ibmcloud api url
+      default: cloud.ibm.com
+    - name: container-repo-url
+      description: Base url for container repository
+      default: us.icr.io
+    - name: container-repo-namespace
+      description: Namespace where image image is located
+    - name: deployment-image
+      description: Name of image to be deployed
+    - name: name-of-cluster
+      description: The number of cluster to deploy the image to
+    - name: cluster-region
+      description: The region where the cluster resides
+      default: us-south
+    - name: mvnGoals
+      description: The Maven goals to run
+      type: array
+      default: ["package"]
+    - name: git-access-token
+      description: MUST UPDATE
+  workspaces:
+    - name: git-repo   
+  tasks:
+  - name: git-clone
+    taskRef:
+      name: git-clone-repo
+    params:
+      - name: git-access-token
+        value: $(params.git-access-token)
+      - name: repository
+        value: $(params.git-repo-url)
+      - name: revision
+        value: $(params.commit-id)
+    workspaces:
+      - name: output
+        workspace: git-repo
+  - name: maven-build-java-artifact-from-source
+    taskRef:
+      name: maven-build-java-artifact-from-source
+    params:
+      - name: pathToContext
+        value: "$(params.path-to-context)"
+      - name: mvnGoals
+        value: ["package"]
+    workspaces:
+      - name: git-repo
+        workspace: git-repo
+  - name: build-image-from-source
+    taskRef:
+      name: build-image-from-source
+    params:
+      - name: pathToContext
+        value: "$(params.pathToContext)"
+      - name: containerRepoUrl
+        value: "$(params.containerRepoUrl)"
+      - name: containerRepoNamespace
+        value: "$(params.containerRepoNamespace)"
+      - name: deploymentImage
+        value: "$(params.deploymentImage)"
+    workspaces:
+      - name: git-repo
+        workspace: git-repo

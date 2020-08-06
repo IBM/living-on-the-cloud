@@ -25,7 +25,7 @@ spec:
         run: storm-tracker
     spec:
       containers:
-      - image: us.icr.io/openj9-demo/storm-tracker:0.0.2-SNAPSHOT
+      - image: IMAGE
         imagePullPolicy: Always
         name: storm-tracker
         resources: {}
@@ -43,3 +43,13 @@ spec:
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
+      volumeMounts:
+        - mountPath: /root/.postgresql/
+          name: postgres-cert
+      volumes:
+        - name: postgres-cert
+          secret:
+            secretName: postgres-cert
+            items:
+              - key: root.crt
+                path: root.crt

@@ -41,27 +41,6 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-			<plugin>
-				<groupId>io.fabric8</groupId>
-				<artifactId>docker-maven-plugin</artifactId>
-				<extensions>true</extensions>
-				<configuration>
-					<images>
-						<image>
-							<name>us.icr.io/openj9-demo/${project.name}</name>
-							<build>
-								<dockerFile>Dockerfile</dockerFile>
-								<dockerFileDir>${project.basedir}</dockerFileDir>
-								<tags>
-									<tag>latest</tag>
-									<tag>${project.version}</tag>
-								</tags>
-							</build>
-						</image>
-					</images>
-				</configuration>
-			</plugin>
 		</plugins>
 	</build>
-
 </project>
