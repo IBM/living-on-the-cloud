@@ -3,15 +3,12 @@ kind: Pipeline
 metadata:
   name: build-pipeline
 spec:
-  resources:
-    - name: source
-      type: git
   params:
     - name: path-to-context
-      description: The path to the build context, used by Kaniko - within the workspace
-      default: .
+      description: The path to the build context
+      default: /start/storm-tracker
     - name: path-to-deployment-file
-      description: The path to the dockerfile to build
+      description: The path to the deployment file 
       default: deployment.yaml
     - name: path-to-dockerfile
       description: The path to the dockerfile to build
@@ -24,21 +21,28 @@ spec:
       default: us.icr.io
     - name: container-repo-namespace
       description: Namespace where image image is located
+      default: living-on-the-cloud
     - name: deployment-image
       description: Name of image to be deployed
+      default: storm-tracker
     - name: name-of-cluster
       description: The number of cluster to deploy the image to
     - name: cluster-region
       description: The region where the cluster resides
       default: us-south
-    - name: mvnGoals
+    - name: mvn-goals
       description: The Maven goals to run
       type: array
       default: ["package"]
     - name: git-access-token
-      description: MUST UPDATE
+      description: API Token for accessing private git repo
+    - name: git-repo-url
+      description: URL to git project that is being built 
+    - name: commit-id
+      description: Commit id to be pulled
   workspaces:
-    - name: git-repo   
+    - name: git-repo 
+      description: Workspace for holding the cloned source code from the git-repo
   tasks:
   - name: git-clone
     taskRef:
@@ -56,26 +60,54 @@ spec:
   - name: maven-build-java-artifact-from-source
     taskRef:
       name: maven-build-java-artifact-from-source
+    runAfter:
+      - git-clone
     params:
-      - name: pathToContext
-        value: "$(params.path-to-context)"
-      - name: mvnGoals
+      - name: mvn-goals
+        type: array
         value: ["package"]
+      - name: path-to-context
+        value: /start/storm-tracker
     workspaces:
-      - name: git-repo
+      - name: source
         workspace: git-repo
-  - name: build-image-from-source
+  - name: build-image-send-to-cr
     taskRef:
-      name: build-image-from-source
+      name: build-image-and-push-image
+    runAfter:
+      - maven-build-java-artifact-from-source
     params:
-      - name: pathToContext
-        value: "$(params.pathToContext)"
-      - name: containerRepoUrl
-        value: "$(params.containerRepoUrl)"
-      - name: containerRepoNamespace
-        value: "$(params.containerRepoNamespace)"
-      - name: deploymentImage
-        value: "$(params.deploymentImage)"
+    - name: container-repo-url
+      value: us.icr.io
+    - name: container-repo-namespace
+      value: living-on-the-cloud
+    - name: deployment-image
+      value: storm-tracker
+    - name: path-to-context
+      value: /start/storm-tracker
     workspaces:
-      - name: git-repo
+      - name: source
+        workspace: git-repo
+  - name: deploy-image-to-ibm-cloud
+    taskRef:
+      name: deploy-image-to-ibm-cloud
+    runAfter:
+      - build-image-send-to-cr
+    params:
+    - name: path-to-context
+      value: /start/storm-tracker
+    - name: path-to-deployment-file
+      value: deployment.yaml
+    - name: name-of-cluster
+      value: mycluster
+    - name: container-repo-url
+      value: us.icr.io
+    - name: container-repo-namespace
+      value: living-on-the-cloud
+    - name: deployment-image
+      value: storm-tracker
+    - name: cluster-region
+      value: us-south
+    workspaces:
+      - name: source
         workspace: git-repo
