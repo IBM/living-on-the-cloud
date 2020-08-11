@@ -31,6 +31,12 @@ spec:
   - name: cluster-region
     description: The region where the cluster resides
     default: us-south
+  - name: cluster-namespace
+    description: The namespace being used within the k8s cluster
+    default: default
+  - name: deployment-image-placeholder
+    description: Placeholder value within deployment yaml to be replaced
+    default: IMAGE
   - name: git-repo-url
     description: URL to the git repo to be cloned
   - name: commit-id
@@ -186,7 +192,7 @@ spec:
     workspaces:
       - name: source
         workspace: git-repo
-  - name: update-deployment-image
+  - name: update-image-ref-in-deployment
     taskRef:
       name: update-deployment-yaml
     runAfter:
@@ -197,9 +203,26 @@ spec:
     - name: path-to-context
       value: $(params.path-to-context)
     - name: placeholder-name
-      value: IMAGE
+      value: $(params.deployment-image-placeholder)
     - name: replacement-value
-      value: $(tasks.checkout-source.results.commit)
+      value: $(tasks.build-image-send-to-cr.results.full-image-path)
+    workspaces:
+      - name: source
+        workspace: git-repo
+  - name: update-binding-name
+    taskRef:
+      name: update-deployment-image
+    runAfter:
+      - maven-build-java-artifact-from-source
+    params:
+    - name: path-to-deployment-file
+      value: $(params.path-to-deployment-file)
+    - name: path-to-context
+      value: $(params.path-to-context)
+    - name: placeholder-name
+      value: $(params.database-binding-placeholder)
+    - name: replacement-value
+      value: $(params.database-binding-name)
     workspaces:
       - name: source
         workspace: git-repo
@@ -214,7 +237,7 @@ spec:
     - name: name-of-cluster
       value: $(params.path-to-context)
     - name: cluster-region
-      value: SERVICE-BINDING-NAME
+      value: $(params.cluster-region)
     - name: api-url
       value: $(params.database-binding-name)
     - name: cluster-namespace
