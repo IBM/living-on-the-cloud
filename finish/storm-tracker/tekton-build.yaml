@@ -49,6 +49,9 @@ spec:
     description: The Maven goals to be executed
     type: array
     default: ["package"]
+  - name: cluster-namespace
+    description: The cluster namespace to be targeted
+    default: default
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -84,7 +87,10 @@ spec:
       - name: commit-id
         value: $(params.commit-id)
       - name: mvn-goals
+        type: array
         value: $(params.mvn-goals)
+      - name: cluster-namespace
+        value: $(params.cluster-namespace)
       workspaces:
         - name: git-repo
           persistentVolumeClaim:
@@ -118,32 +124,20 @@ metadata:
 spec:
   params:
     - name: path-to-context
-      description: The path to the build context
     - name: path-to-deployment-file
-      description: The path to the deployment file 
     - name: path-to-dockerfile
-      description: The path to the dockerfile to build
     - name: api-url
-      description: ibmcloud api url
     - name: container-repo-url
-      description: Base url for container repository
     - name: container-repo-namespace
-      description: Namespace where image image is located
+    - name: cluster-namespace
     - name: deployment-image
-      description: Name of image to be deployed
     - name: name-of-cluster
-      description: The number of cluster to deploy the image to
     - name: cluster-region
-      description: The region where the cluster resides
     - name: mvn-goals
-      description: The Maven goals to run
       type: array
     - name: git-access-token
-      description: API Token for accessing private git repo
     - name: git-repo-url
-      description: URL to git project that is being built 
     - name: commit-id
-      description: Commit id to be pulled
   workspaces:
     - name: git-repo 
       description: Workspace for holding the cloned source code from the git-repo
@@ -179,7 +173,7 @@ spec:
     taskRef:
       name: build-image-and-push-image
     runAfter:
-      - maven-build-java-artifact-from-source
+      - build-artifact-from-source
     params:
     - name: container-repo-url
       value: $(params.container-repo-url)
@@ -196,7 +190,7 @@ spec:
     taskRef:
       name: update-deployment-yaml
     runAfter:
-      - maven-build-java-artifact-from-source
+      - build-image-send-to-cr
     params:
     - name: path-to-deployment-file
       value: $(params.path-to-deployment-file)
@@ -209,28 +203,11 @@ spec:
     workspaces:
       - name: source
         workspace: git-repo
-  - name: update-binding-name
-    taskRef:
-      name: update-deployment-image
-    runAfter:
-      - maven-build-java-artifact-from-source
-    params:
-    - name: path-to-deployment-file
-      value: $(params.path-to-deployment-file)
-    - name: path-to-context
-      value: $(params.path-to-context)
-    - name: placeholder-name
-      value: $(params.database-binding-placeholder)
-    - name: replacement-value
-      value: $(params.database-binding-name)
-    workspaces:
-      - name: source
-        workspace: git-repo
   - name: deploy-image-to-ibm-cloud
     taskRef:
       name: deploy-image-to-ibm-cloud
     runAfter:
-      - maven-build-java-artifact-from-source
+      - update-image-ref-in-deployment
     params:
     - name: path-to-deployment-file
       value: $(params.path-to-deployment-file)
@@ -239,7 +216,7 @@ spec:
     - name: cluster-region
       value: $(params.cluster-region)
     - name: api-url
-      value: $(params.database-binding-name)
+      value: $(params.api-url)
     - name: cluster-namespace
       value: $(params.cluster-namespace)
     workspaces:

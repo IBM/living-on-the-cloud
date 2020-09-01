@@ -27,7 +27,7 @@ spec:
     default: storm-tracker
   - name: name-of-cluster
     description: The number of cluster to deploy the image to
-    default: mycluster
+    default: living-on-the-cloud
   - name: cluster-region
     description: The region where the cluster resides
     default: us-south
@@ -45,10 +45,6 @@ spec:
     description: The service account id the pipeline is run under
   - name: apikey
     description: Service Account API KEY for interacting with IBM Cloud note the specific syntax of apikey has special relevance to many IBM Cloud resources, so should not be changed.
-  - name: mvn-goals
-    description: The Maven goals to be executed
-    type: array
-    default: ["package"]
   resourcetemplates:
   - apiVersion: tekton.dev/v1beta1
     kind: PipelineRun
@@ -83,8 +79,10 @@ spec:
         value: $(params.git-repo-url)
       - name: commit-id
         value: $(params.commit-id)
-      - name: mvn-goals
-        value: $(params.mvn-goals)
+      - name: deployment-image-placeholder
+        value: $(params.deployment-image-placeholder)
+      - name: cluster-namespace
+        value: $(params.cluster-namespace)
       workspaces:
         - name: git-repo
           persistentVolumeClaim:
@@ -138,12 +136,17 @@ spec:
     - name: mvn-goals
       description: The Maven goals to run
       type: array
+      default: ["package"]
     - name: git-access-token
       description: API Token for accessing private git repo
     - name: git-repo-url
       description: URL to git project that is being built 
     - name: commit-id
       description: Commit id to be pulled
+    - name: deployment-image-placeholder
+      description: Value to be searched on and replaced in YAML file
+    - name: cluster-namespace
+      description: Namespace in cluster to deploy to
   workspaces:
     - name: git-repo 
       description: Workspace for holding the cloned source code from the git-repo
@@ -169,7 +172,7 @@ spec:
     params:
       - name: mvn-goals
         type: array
-        value: $(params.mvn-goals)
+        value: ["package"]
       - name: path-to-context
         value: $(params.path-to-context)
     workspaces:
@@ -179,7 +182,7 @@ spec:
     taskRef:
       name: build-image-and-push-image
     runAfter:
-      - maven-build-java-artifact-from-source
+      - build-artifact-from-source
     params:
     - name: container-repo-url
       value: $(params.container-repo-url)
@@ -194,9 +197,9 @@ spec:
         workspace: git-repo
   - name: update-image-ref-in-deployment
     taskRef:
-      name: update-deployment-yaml
+      name: update-yaml-file
     runAfter:
-      - maven-build-java-artifact-from-source
+      - build-image-send-to-cr
     params:
     - name: path-to-deployment-file
       value: $(params.path-to-deployment-file)
@@ -209,39 +212,24 @@ spec:
     workspaces:
       - name: source
         workspace: git-repo
-  - name: update-binding-name
-    taskRef:
-      name: update-deployment-image
-    runAfter:
-      - maven-build-java-artifact-from-source
-    params:
-    - name: path-to-deployment-file
-      value: $(params.path-to-deployment-file)
-    - name: path-to-context
-      value: $(params.path-to-context)
-    - name: placeholder-name
-      value: $(params.database-binding-placeholder)
-    - name: replacement-value
-      value: $(params.database-binding-name)
-    workspaces:
-      - name: source
-        workspace: git-repo
   - name: deploy-image-to-ibm-cloud
     taskRef:
       name: deploy-image-to-ibm-cloud
     runAfter:
-      - maven-build-java-artifact-from-source
+      - update-image-ref-in-deployment
     params:
     - name: path-to-deployment-file
       value: $(params.path-to-deployment-file)
     - name: name-of-cluster
-      value: $(params.path-to-context)
+      value: $(params.name-of-cluster)
     - name: cluster-region
       value: $(params.cluster-region)
     - name: api-url
-      value: $(params.database-binding-name)
+      value: $(params.api-url)
     - name: cluster-namespace
       value: $(params.cluster-namespace)
+    - name: path-to-context
+      value: $(params.path-to-context)
     workspaces:
       - name: source
         workspace: git-repo
